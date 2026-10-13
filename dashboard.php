@@ -1,10 +1,12 @@
 <?php
 session_start();
 
+// ดึงค่า role จาก session ของผู้ที่ล็อกอินอยู่
+$user_role = $_SESSION['role'] ?? 'staff';
+
 // เชื่อมต่อฐานข้อมูล
 $conn = new mysqli("localhost", "root", "", "it_asset_db");
 if ($conn->connect_error) {
-    // กรณีมีไฟล์ db.php สามารถเปลี่ยนเป็น require_once('db.php'); ได้ครับ
     die("Connection failed: " . $conn->connect_error);
 }
 
@@ -19,7 +21,7 @@ $pending_req_count = 0;
 $res_p = $conn->query("SELECT COUNT(*) AS total FROM requisitions WHERE status = 'pending'");
 if ($res_p) $pending_req_count = $res_p->fetch_assoc()['total'] ?? 0;
 
-// 3. รายการรอตรวจรับคืน (สถานะ approved หรือ return_pending)
+// 3. รายการรอตรวจรับคืน
 $pending_returns_count = 0;
 $res_r = $conn->query("SELECT COUNT(*) AS total FROM requisitions WHERE status IN ('approved', 'return_pending')");
 if ($res_r) $pending_returns_count = $res_r->fetch_assoc()['total'] ?? 0;
@@ -64,7 +66,7 @@ if ($res_r) $pending_returns_count = $res_r->fetch_assoc()['total'] ?? 0;
             <p class="text-secondary small">เลือกเมนูการใช้งานที่ต้องการทำรายการได้จากด้านล่างนี้</p>
         </div>
 
-        <!-- 1. เมนูพนักงาน (User Services) -->
+        <!-- 1. เมนูพนักงาน (User Services) - แสดงให้ทุกสิทธิ์เห็น -->
         <div class="mb-4">
             <div class="section-title mb-3">เมนูพนักงาน (User Services)</div>
             <div class="row g-4">
@@ -124,7 +126,8 @@ if ($res_r) $pending_returns_count = $res_r->fetch_assoc()['total'] ?? 0;
             </div>
         </div>
 
-        <!-- 2. เมนูผู้ดูแลระบบ (Admin Controls) -->
+        <!-- 2. เมนูผู้ดูแลระบบ (Admin Controls) - แสดงเฉพาะ Admin และ Manager เท่านั้น -->
+        <?php if ($user_role === 'admin' || $user_role === 'manager'): ?>
         <div class="mb-4">
             <div class="section-title mb-3 text-danger" style="border-color: #dc2626;">เมนูผู้ดูแลระบบ (Admin Controls)</div>
             <div class="row g-4">
@@ -233,6 +236,7 @@ if ($res_r) $pending_returns_count = $res_r->fetch_assoc()['total'] ?? 0;
                 </div>
             </div>
         </div>
+        <?php endif; ?>
 
     </div>
 
